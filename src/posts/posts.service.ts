@@ -1,8 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-
-
-
 export interface PostModel{
     id:number;
     author:string;
@@ -102,6 +99,5 @@ export class PostsService {
     posts = posts.filter(post => post.id !== + postId);
 
     return postId;
-
     }
 }
