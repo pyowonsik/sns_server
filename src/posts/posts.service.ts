@@ -1,4 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { PostsModel } from './entities/posts.entity';
 
 export interface PostModel{
     id:number;
@@ -38,37 +41,55 @@ export interface PostModel{
   
 @Injectable()
 export class PostsService {
+  constructor(
+    @InjectRepository(PostsModel)
+    private readonly postRepository:Repository<PostModel>){};
 
-    getAllPosts(){
-        return posts;
+    async getAllPosts(){
+      return this.postRepository.find();
     }
 
-    getPostById(id:number){
-        const post = posts.find((post) => post.id === +id); // type 비교시 string 타입에 +하면 number와 비교 가능
-        if(!post){
-          throw new NotFoundException();
-        }
-        return post;
-    }
-
-    createPost(author:string,title:string,content:string){
-        const post : PostModel = {
-            id:posts[posts.length - 1].id + 1,
-            author, // author : author
-            title,
-            content,
-            likeCount : 0,
-            commentCount:0,
-          }
+    async getPostById(id:number){
       
-          posts = [...posts,post];
-          return post;
+      const post =  await this.postRepository.findOne({
+        where:{
+          id:id,
+        }
+      });  
+      if(!post){
+        throw new NotFoundException();
+      }
+      return post;
     }
 
-    updatePost(postId:number,author:string,title:string,content:string){
-         // posts 내부의 id와 매개변수로 받은 id를 비교해서 id가 있다면 Patch Target
-    const post = posts.find((post) => post.id === postId); 
+    async createPost(author:string,title:string,content:string){
+      // 1) create() -> 저장할 객체를 생성한다.
+        const post = this.postRepository.create({
+          author, // author : author,
+          title,
+          content,
+          likeCount:0,
+          commentCount:0,
+        });
+      
+      // 2) save() -> 객체를 저장한다. (create()에서 생성한 객체로)      
+        const newPost = await this.postRepository.save(post);
+        return newPost;
+    }
 
+    async updatePost(postId:number,author:string,title:string,content:string){
+
+
+    // sava의 기능
+    // 1) 만약에 데이터가 존재하지 않는 다면 (id기준) 새로 생성한다.
+    // 2) 만약에 데이터가 존재한다면 (같은 id의 값이 존재한다면) 존재 하던 값을 update한다.
+
+    const post = await this.postRepository.findOne({
+      where:{
+        id:postId
+      },
+    }); 
+    
     if(!post){
       throw new NotFoundException();
     }
@@ -80,24 +101,28 @@ export class PostsService {
     if(title){
       post.title = title;
     }
+
     if(content){
       post.content = content;
     }
 
-    // Target 이라면 새로 변경한 post를 넣어준다.
-    posts.map(prevPost => prevPost.id === postId ? post : prevPost);
-    return post;
+    const newPost = await this.postRepository.save(post);
+    return newPost;
+
     }
 
-    deletePost(postId:number){
-
-    const post = posts.find((post) => post.id === postId); 
+    async deletePost(postId:number){
+    const post = await this.postRepository.findOne({
+      where:{
+        id:postId
+      }
+    });
 
     if(!post){
       throw new NotFoundException();
     }
-    posts = posts.filter(post => post.id !== + postId);
 
-    return postId;
-    }
+    await this.postRepository.delete(postId);
+    return postId; 
+  }
 }
