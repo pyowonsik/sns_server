@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post } from '@nestjs/common';
-import { PostsService ,PostModel} from './posts.service';
+import { PostsService } from './posts.service';
 
 @Controller('posts')
 export class PostsController {
@@ -24,11 +24,11 @@ export class PostsController {
   // post를 생성한다.
   @Post() // http://localhost:3000/posts
   postPosts(
-    @Body('author') author:string,
+    @Body('authorId') authorId:number,
     @Body('title') title:string,
     @Body('content') content:string, 
   ){
-   return this.postsService.createPost(author,title,content);
+   return this.postsService.createPost(authorId,title,content);
   }
 
   // 4) PATCH  /posts/:id
@@ -36,11 +36,10 @@ export class PostsController {
   @Patch(':id') // http://localhost:3000/posts/:id
   patchPost(
     @Param('id') id : string,
-    @Body('author') author?:string,
     @Body('title') title?:string,
     @Body('content') content?:string, 
   ){
-   return this.postsService.updatePost(+id,author,title,content);
+   return this.postsService.updatePost(+id,title,content);
   }
 
   // 5) DELETE /posts/:id

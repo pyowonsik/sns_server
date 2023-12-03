@@ -1,52 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UsersModel } from 'src/users/entities/users.entity';
 import { Repository } from 'typeorm';
 import { PostsModel } from './entities/posts.entity';
 
-export interface PostModel{
-    id:number;
-    author:string;
-    title:string;
-    content:string;
-    likeCount:number;
-    commentCount:number;
-  }
-  
-  let posts : PostModel[] = [
-    {
-      id:1,
-      author:'newJeans_official',
-      title:'뉴진스 민지',
-      content:'메이크업 고치고 있는 민지',
-      likeCount:1000000,
-      commentCount:99999,
-    },
-    {
-      id:2,
-      author:'newJeans_official',
-      title:'뉴진스 해린',
-      content:'노래 연습하고 있는 해린',
-      likeCount:1000000,
-      commentCount:99999,
-    },
-    {
-      id:3,
-      author:'blackpink_official',
-      title:'블랙핑크 로제',
-      content:'종합운동장에서 운동하고 있는 로제',
-      likeCount:1000000,
-      commentCount:99999,
-    }
-  ];
-  
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(PostsModel)
-    private readonly postRepository:Repository<PostModel>){};
+    private readonly postRepository:Repository<PostsModel>){};
 
     async getAllPosts(){
-      return this.postRepository.find();
+      return this.postRepository.find({
+        // relations : {
+        //   author : true
+        // }
+        relations : ['author']
+      });
     }
 
     async getPostById(id:number){
@@ -54,7 +24,8 @@ export class PostsService {
       const post =  await this.postRepository.findOne({
         where:{
           id:id,
-        }
+        },
+        relations: ['author'],
       });  
       if(!post){
         throw new NotFoundException();
@@ -62,10 +33,13 @@ export class PostsService {
       return post;
     }
 
-    async createPost(author:string,title:string,content:string){
+    async createPost(authorId:number,title:string,content:string){
       // 1) create() -> 저장할 객체를 생성한다.
         const post = this.postRepository.create({
-          author, // author : author,
+          author : {
+            // post가 어떤 User로 들어갈껀지 정해줘야하기 때문에 파라미터를 authorId(userId)로 받아야 한다.
+             id : authorId, 
+          }, 
           title,
           content,
           likeCount:0,
@@ -77,7 +51,7 @@ export class PostsService {
         return newPost;
     }
 
-    async updatePost(postId:number,author:string,title:string,content:string){
+    async updatePost(postId:number,title:string,content:string){
 
 
     // sava의 기능
@@ -94,9 +68,6 @@ export class PostsService {
       throw new NotFoundException();
     }
 
-    if(author){
-      post.author = author;
-    }
 
     if(title){
       post.title = title;
@@ -123,6 +94,6 @@ export class PostsService {
     }
 
     await this.postRepository.delete(postId);
-    return postId; 
+    return postId;  
   }
 }
