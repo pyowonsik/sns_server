@@ -13,7 +13,7 @@ export class UsersService {
     async createUser(user : Pick<UsersModel,'nickname' | 'email'|'password'>){
         // 1) nickname 중복이 없는지 확인
         // exist() -> 조건에 해당되는 값이 있으면 true
-        const nicknameExists = this.usersRepository.exist({
+        const nicknameExists = await this.usersRepository.exist({
             where:{
                 nickname : user.nickname,
             }
@@ -23,7 +23,7 @@ export class UsersService {
             throw new BadRequestException('이미 존재하는 닉네임 입니다!');
         }
 
-        const emailExists = this.usersRepository.exist({
+        const emailExists = await this.usersRepository.exist({
             where : {
                 email : user.email,
             }
