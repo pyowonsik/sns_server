@@ -1,13 +1,12 @@
+import { BaseModel } from "src/common/entity/common.entity";
 import { PostsModel } from "src/posts/entities/posts.entity";
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { RolesEnum } from "../const/roles.const";
 
 
 @Entity()
-export class UsersModel{
+export class UsersModel extends BaseModel{
 
-    @PrimaryGeneratedColumn()
-    id : number;
 
     @Column({
         length : 20,
@@ -35,4 +34,6 @@ export class UsersModel{
     // UserModel은 PostModel의 author가 된다.
     @OneToMany(() => PostsModel,(post) => post.author)
     posts : PostsModel[];
+
+
 }

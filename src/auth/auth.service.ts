@@ -35,10 +35,14 @@ export class AuthService {
      * 6) 토큰이 만료되면 각각의 토큰을 새로 발급 받을 수 있는 엔드포인트에 요청을 보내서
      *    새로운 토큰을 발급받고 새로운 토큰을 사용해서 private route에 접근한다.
      */
+
+     
+    // 로그인,회원가입,토큰 재발급등을 위해 header로 보내는 Bearer,Basic 토큰에서 토큰값을 분리
     extractTokenFromHeader(header: string, isBearer: boolean) {
         const splitToken = header.split(' ');
 
         const prefix = isBearer ? 'Bearer' : 'Basic'
+        
 
         if (splitToken.length !== 2 || splitToken[0] !== prefix) {
             throw new UnauthorizedException('잘못된 토큰입니다.');
@@ -46,9 +50,12 @@ export class AuthService {
 
         const token = splitToken[1];
 
+
         return token;
     }
-
+    
+    // 분리된 토큰을 utf8로 디코딩 하여 계정 정보(email:password)를 반환
+    // 반환된 값으로 로그인
     decodeBasicToken(base64String: string){
         const decoded = Buffer.from(base64String, 'base64').toString('utf8');
 
@@ -60,6 +67,7 @@ export class AuthService {
     
         const email = split[0];
         const password = split[1];
+        
 
         return {
             email,
@@ -67,13 +75,17 @@ export class AuthService {
         }
     }
 
+    // 토큰 검증
     verifyToken(token: string) {
         return this.jwtService.verify(token, {
             secret: JWT_SECRET,
         });
     }
-
+    
+    // extractTokenFromHeader()통해 분리된
+    // Refresh 토큰을 이용해 Access 또는 Refresh 토큰을 다시 생성하여 반환 
     async rotateToken(token: string, isRefreshToken: boolean) {
+        // refresh토큰을 받아서 디코딩 (토큰 생성시 payload의 email,sub(id) 필요)
         const decoded = this.jwtService.verify(token, {
             secret: JWT_SECRET,
         });
@@ -81,7 +93,7 @@ export class AuthService {
         if(decoded.type !== 'refresh'){
             throw new UnauthorizedException('토큰 재발급은 Refresh 토큰으로만 가능합니다!');
         }
-
+        // payload를 이용해 signToken 함수를 호출하여 토큰을 재발급(재생성)
         return this.signToken({
             ...decoded,
         }, isRefreshToken);
@@ -109,6 +121,7 @@ export class AuthService {
      *      4. 반환된 데이터를 기반으로 loginWithEmail에서 토큰 생성
      */
 
+    // 토큰을 생성
     signToken(user: Pick<UsersModel, 'email' | 'id'>, isRefreshToken: boolean) {
         const payload = {
             email: user.email,
@@ -116,6 +129,7 @@ export class AuthService {
             type: isRefreshToken ? 'refresh' : 'access',
         };
 
+        // payload(email,id,type(refresh,access) + JWT_SECRET을 이용해 토큰을 생성
         return this.jwtService.sign(payload, {
             secret: JWT_SECRET,
             // seconds
@@ -123,6 +137,7 @@ export class AuthService {
         });
     }
 
+    // 로그인시 토큰 생성함수를 호출
     loginUser(user: Pick<UsersModel, 'email' | 'id'>) {
         return {
             accessToken: this.signToken(user, false),
@@ -130,6 +145,7 @@ export class AuthService {
         }
     }
 
+    // 로그인 정보가 맞는지 확인
     async authenticateWithEmailAndPassword(user: Pick<UsersModel, 'email' | 'password'>) {
         /**
          * 1. 사용자가 존재하는지 확인 (email)
@@ -148,7 +164,9 @@ export class AuthService {
          * 1) 입력된 비밀번호
          * 2) 기존 해시 (hash) -> 사용자 정보에 저장돼있는 hash
          */
-        const passOk = await bcrypt.compare(user.password, existingUser.password);
+        // 기존 패스워드와 암호화된 패스워드 비교
+        const passOk = await bcrypt.compare(user.password, existingUser.password); 
+        
 
         if (!passOk) {
             throw new UnauthorizedException('비밀번호가 틀렸습니다.');
@@ -157,18 +175,22 @@ export class AuthService {
         return existingUser;
     }
 
+    // 로그인시 -> 로그인 정보가 맞는지 확인하는 함수 호출 -> 맞다면 로그인 함수 호출 -> 토큰 생성 함수 호출
     async loginWithEmail(user: Pick<UsersModel, 'email' | 'password'>) {
         const existingUser = await this.authenticateWithEmailAndPassword(user);
 
         return this.loginUser(existingUser);
     }
 
+    // 회원가입 -> 중복 회원이 없다면 로그인 함수 호출 -> 로그인 함수 호출 -> 토큰 생성 함수 호출  
     async registerWithEmail(user: Pick<UsersModel, 'nickname' | 'email' | 'password'>) {
+        // 비밃번호 암호화
         const hash = await bcrypt.hash(
             user.password,
             HASH_ROUND,
         );
-
+        
+        
         const newUser = await this.usersService.createUser({
             ...user,
             password: hash,

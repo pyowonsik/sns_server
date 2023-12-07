@@ -45,7 +45,9 @@ export class UsersService {
     }
     
     async getAllUsers(){
-        return this.usersRepository.find();
+        return this.usersRepository.find({relations: {
+            posts : true
+        }});
     }
 
     async getUserByEmail(email:string){
