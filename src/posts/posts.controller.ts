@@ -1,6 +1,9 @@
 import { Body, Controller, DefaultValuePipe, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post, UseGuards , Request} from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { AccessTokenGuard } from '../auth/guard/bearer-token.guard';
+import { User } from 'src/users/decorator/user.decorator';
+import { UsersModel } from 'src/users/entities/users.entity';
+import { CreatePostDto } from './dto/create-post.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -26,16 +29,21 @@ export class PostsController {
 
   // 3) POST /posts
   // post를 생성한다.
+  //
+  // DTO - Data Transfer Object
   @Post() // http://localhost:3000/posts
   @UseGuards(AccessTokenGuard)
   postPosts(
-    @Request() req : any, // Access Token의 정보 ?
-    @Body('title') title:string,
-    @Body('content') content:string,
+    @User() user : UsersModel,
+    @Body() body : CreatePostDto
+    // @Body('title') title:string,
+    // @Body('content') content:string,
   ){
-    const authorId = req.user.id;
 
-   return this.postsService.createPost(authorId,title,content);
+    // ID를 직접 받는것이 아닌 토큰을 통해 사용자의 정보에 맞는 포스트 작성
+    const authorId = user.id;
+
+   return this.postsService.createPost(authorId,body);
   }
   
 
