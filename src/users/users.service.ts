@@ -45,9 +45,24 @@ export class UsersService {
     }
     
     async getAllUsers(){
-        return this.usersRepository.find({relations: {
-            posts : true
-        }});
+
+        const user = await this.usersRepository
+        .createQueryBuilder('user')
+        .innerJoinAndSelect('user.posts','posts')
+        .getMany();
+
+        // 기준 테이블 : user , 참조 테이블 : post
+        // inner join : (posts)참조 테이블에에 데이터가 없는 
+        // (user)기준 테이블은 조회를 하지 않는다.
+        // left join : (posts)참조 테이블에 데이터가 있던 없던 
+        // (user)기준테이블에 데이터가 있으면 조회
+
+        // console.log(result);
+
+        return user;
+        // return this.usersRepository.find({relations: {
+        //     // posts : true
+        // }});
     }
 
     async getUserByEmail(email:string){

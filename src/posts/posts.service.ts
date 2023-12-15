@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersModel } from 'src/users/entities/users.entity';
 import { Repository } from 'typeorm';
+import { CreatePostDto } from './dto/create-post.dto';
 import { PostsModel } from './entities/posts.entity';
 
 @Injectable()
@@ -11,12 +12,23 @@ export class PostsService {
     private readonly postRepository:Repository<PostsModel>){};
 
     async getAllPosts(){
-      return this.postRepository.find({
-        // relations : {
-        //   author : true
-        // }
-        relations : ['author']
-      });
+
+      const post = this.postRepository
+      .createQueryBuilder('posts')
+      .innerJoinAndSelect('posts.author','author')
+      .getMany();
+
+      return post;
+
+      
+
+      // // one,many 입장에서 join쿼리 해보기 
+      // return this.postRepository.find({
+      //   // relations : {
+      //   //   author : true
+      //   // }
+      //   // relations : ['author']
+      // });
     }
 
     async getPostById(id:number){
@@ -33,15 +45,14 @@ export class PostsService {
       return post;
     }
 
-    async createPost(authorId:number,title:string,content:string){
+    async createPost(authorId:number, postDto:CreatePostDto){
       // 1) create() -> 저장할 객체를 생성한다.
         const post = this.postRepository.create({
           author : {
             // post가 어떤 User로 들어갈껀지 정해줘야하기 때문에 파라미터를 authorId(userId)로 받아야 한다.
              id : authorId, 
           }, 
-          title,
-          content,
+          ...postDto,
           likeCount:0,
           commentCount:0,
         });
