@@ -37,6 +37,7 @@ export class AuthService {
      */
 
      
+    // Bearer,Basic 분리
     // 로그인,회원가입,토큰 재발급등을 위해 header로 보내는 Bearer,Basic 토큰에서 토큰값을 분리
     extractTokenFromHeader(header: string, isBearer: boolean) {
         const splitToken = header.split(' ');
@@ -54,6 +55,7 @@ export class AuthService {
         return token;
     }
     
+    // 토큰 디코드 
     // 분리된 토큰을 utf8로 디코딩 하여 계정 정보(email:password)를 반환
     // 반환된 값으로 로그인
     decodeBasicToken(base64String: string){
@@ -75,13 +77,18 @@ export class AuthService {
         }
     }
 
-    // 토큰 검증
+    // 토큰 검증 -> payload 반환
     verifyToken(token: string) {
-        return this.jwtService.verify(token, {
-            secret: JWT_SECRET,
-        });
+        try{
+            return this.jwtService.verify(token, {
+                secret: JWT_SECRET,
+            });
+        }catch(e){
+            throw new UnauthorizedException('토큰이 만료됬거나 잘못된 토큰입니다.');
+        }
     }
-    
+
+    // 토큰 재발급
     // extractTokenFromHeader()통해 분리된
     // Refresh 토큰을 이용해 Access 또는 Refresh 토큰을 다시 생성하여 반환 
     async rotateToken(token: string, isRefreshToken: boolean) {
@@ -141,7 +148,7 @@ export class AuthService {
     loginUser(user: Pick<UsersModel, 'email' | 'id'>) {
         return {
             accessToken: this.signToken(user, false),
-            refreshToken: this.signToken(user, true),
+            refreshToken: this.signToken(user, true), 
         }
     }
 
@@ -189,6 +196,7 @@ export class AuthService {
             user.password,
             HASH_ROUND,
         );
+
         
         
         const newUser = await this.usersService.createUser({

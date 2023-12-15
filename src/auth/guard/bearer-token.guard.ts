@@ -10,6 +10,7 @@ export class BearerTokenGuard implements CanActivate{
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const req = context.switchToHttp().getRequest();
 
+
         const rawToken = req.headers['authorization'];
 
         if(!rawToken){
@@ -17,8 +18,12 @@ export class BearerTokenGuard implements CanActivate{
         }
 
         const token = this.authService.extractTokenFromHeader(rawToken, true);
+        
 
+        // payload를 통해 사용자 정보를 가져옴
         const result = await this.authService.verifyToken(token);
+
+
 
         /**
          * request에 넣을 정보
@@ -36,6 +41,9 @@ export class BearerTokenGuard implements CanActivate{
         return true;
     }
 }
+
+
+
 
 @Injectable()
 export class AccessTokenGuard extends BearerTokenGuard{

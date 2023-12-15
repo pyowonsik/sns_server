@@ -37,7 +37,7 @@ export class AuthController {
     /**
      * {refreshToken  : {token}}
      */
-
+  
     const newToken =  await this.authService.rotateToken(token,true);
     return {
       refreshToken : newToken,
@@ -51,8 +51,11 @@ export class AuthController {
   ){
     // email:password
     // nasjkfnqonqovqd[qpwd] -> email:password
+
+    // Basic or Bearer 구분 하여 토큰 get
     const token = this.authService.extractTokenFromHeader(rawToken,false);  
 
+    // token 디코드 
     const credentials = this.authService.decodeBasicToken(token);
 
     return this.authService.loginWithEmail(credentials);
