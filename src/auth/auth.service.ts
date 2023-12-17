@@ -4,6 +4,7 @@ import { UsersModel } from 'src/users/entities/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { HASH_ROUND, JWT_SECRET } from './const/auth.const';
 import * as bcrypt from 'bcrypt';
+import { RegisterUserDto } from './dto/register-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -190,7 +191,7 @@ export class AuthService {
     }
 
     // 회원가입 -> 중복 회원이 없다면 로그인 함수 호출 -> 로그인 함수 호출 -> 토큰 생성 함수 호출  
-    async registerWithEmail(user: Pick<UsersModel, 'nickname' | 'email' | 'password'>) {
+    async registerWithEmail(user: RegisterUserDto) {
         // 비밃번호 암호화
         const hash = await bcrypt.hash(
             user.password,

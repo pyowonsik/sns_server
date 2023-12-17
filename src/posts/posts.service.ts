@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UsersModel } from 'src/users/entities/users.entity';
 import { Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsModel } from './entities/posts.entity';
 
 @Injectable()
@@ -62,8 +63,9 @@ export class PostsService {
         return newPost;
     }
 
-    async updatePost(postId:number,title:string,content:string){
+    async updatePost(postId:number,postDto : UpdatePostDto){
 
+      const {title , content} = postDto;
 
     // sava의 기능
     // 1) 만약에 데이터가 존재하지 않는 다면 (id기준) 새로 생성한다.

@@ -1,5 +1,6 @@
 import { Body, Controller, Post , Headers, UseGuards,Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { RegisterUserDto } from './dto/register-user.dto';
 import { BasicTokenGuard } from './guard/basic-token.guard';
 import { AccessTokenGuard, RefreshTokenGuard } from './guard/bearer-token.guard';
 import { MaxLengthPipe, MinLengthPipe, PasswordPipe } from './pipe/password.pipe';
@@ -63,11 +64,12 @@ export class AuthController {
 
   @Post('register/email')
   postRegisterEmail(
-    @Body('nickname')nickname:string,
-    @Body('email') email:string,
-    @Body('password',new MaxLengthPipe(8),new MinLengthPipe(3)) password:string,
+    @Body() body : RegisterUserDto
+    // @Body('nickname')nickname:string,
+    // @Body('email') email:string,
+    // @Body('password',new MaxLengthPipe(8),new MinLengthPipe(3)) password:string,
   ){
-    return this.authService.registerWithEmail({nickname,email,password});
+    return this.authService.registerWithEmail(body);
   }
 
 
